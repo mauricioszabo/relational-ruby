@@ -15,12 +15,22 @@ module Relational
       private :query
 
       lazy(:partial) do
-        if(@comparable.nil?)
+        if(@comparable.nil? && ['=', '<>'].include?(@comparission))
           handle_nil
         else
           PartialStatement.new(query, @attribute.partial.attributes + [@comparable])
         end
       end
+
+      def handle_nil
+        query = if(@comparission == "=")
+          "IS NULL"
+        else
+          "IS NOT NULL"
+        end
+        PartialStatement.new("#{@attribute.partial.query} #{query}", @attribute.partial.attributes)
+      end
+      private :handle_nil
     end
   end
 end

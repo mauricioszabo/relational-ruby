@@ -16,5 +16,9 @@ module Relational
     it 'can represent dinamically an attribute on a table' do
       table.name.should have_pseudo_sql("examples.name")
     end
+
+    it 'can represent a literal' do
+      Attributes.wrap('Foo').should have_pseudo_sql("'Foo'")
+    end
   end
 end

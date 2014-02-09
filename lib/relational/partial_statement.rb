@@ -15,6 +15,7 @@ module Relational
 
         case attribute
           when String then "'#{attribute.gsub("'", "''")}'"
+          when nil then "NULL"
           else attribute.to_s
         end
       end
