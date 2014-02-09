@@ -1,6 +1,7 @@
+require_relative "modifiable"
 module Relational
   module Attributes
-    class Attribute
+    class Attribute < Modifiable
       def initialize(table, attribute_name)
         @table, @attribute_name = table, attribute_name
       end
