@@ -6,7 +6,7 @@ module Relational
         @table, @attribute_name = table, attribute_name
       end
 
-      def partial
+      lazy :partial do
         PartialStatement.new("#{@table.representation}.#{@attribute_name}")
       end
     end

@@ -5,7 +5,6 @@ module Relational
     let(:table) { Tables::Table.new("examples") }
     let(:name) { Attributes::Attribute.new(table, "name") }
 
-
     it 'defines equalities with values' do
       (name == 'foo').should have_pseudo_sql("examples.name = 'foo'")
     end
@@ -18,11 +17,16 @@ module Relational
       (name != "Foo").should have_pseudo_sql("examples.name <> 'Foo'")
     end
 
-    it "defines equality with NULL" do
-      (name == nil).should have_pseudo_sql("examples.name IS NULL")
-      (name != nil).should have_pseudo_sql("examples.name IS NOT NULL")
-      (name < nil).should have_pseudo_sql("examples.name < NULL")
-      (name.nil?).should have_pseudo_sql("examples.name IS NULL")
+    it "defines equality with LIKE and NOT LIKE" do
+      (name =~ "Foo").should have_pseudo_sql("examples.name LIKE 'Foo'")
+      (name.like "Foo").should have_pseudo_sql("examples.name LIKE 'Foo'")
+      (name !~ "Foo").should have_pseudo_sql("examples.name NOT LIKE 'Foo'")
+      (name.not_like "Foo").should have_pseudo_sql("examples.name NOT LIKE 'Foo'")
+    end
+
+    it "defines equality and inequality with other attributes" do
+      (name == table[:id]).should have_pseudo_sql("examples.name = examples.id")
+      (name != table[:id]).should have_pseudo_sql("examples.name <> examples.id")
     end
 
     it 'supports SUM' do
