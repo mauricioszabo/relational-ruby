@@ -5,8 +5,6 @@ module Relational
     module Oracle
       extend Default
     end
-
-    register_driver('oracle', Oracle)
   end
 end
 

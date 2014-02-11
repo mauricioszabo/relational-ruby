@@ -5,7 +5,7 @@ module Relational
     let(:table) { Tables::Table.new("examples") }
     let(:name) { Attributes::Attribute.new(table, "name") }
 
-    before { Relational::Adapters.define_driver('default') }
+    before { Relational::Adapters.define_driver('all') }
 
     it 'defines equalities with values' do
       (name == 'foo').should have_pseudo_sql("examples.name = 'foo'")

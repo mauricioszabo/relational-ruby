@@ -5,7 +5,7 @@ module Relational
     module Default
 
       def partial_for_function(function, attribute, params)
-        function = get_function(function).call(attribute, *params)
+        function = send("function_for_#{function}", attribute, *params)
         if function.is_a?(Relational::PartialStatement)
           function
         else
@@ -15,22 +15,10 @@ module Relational
       end
 
       def add_function(name, body)
-        @functions ||= {}
-        @functions[name] = body
-      end
-
-      def get_function(function)
-        @functions ||= {}
-        if self == Default
-          @functions.fetch(function)
-        else
-          @functions.fetch(function) { Relational::Adapters::Default.get_function(function) }
-        end
+        self.class.send(:define_method, "function_for_#{name}", &body)
       end
 
       extend self
     end
-
-    register_driver('default', Default)
   end
 end

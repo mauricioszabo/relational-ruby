@@ -2,29 +2,12 @@ module Relational
   module Adapters
     extend self
 
-    # Gets the instance that translates Relational's commands and methods
-    # into specific SQL functions and commands
-    def instance
-      @instance ||= begin
-        get_driver(@current_driver || 'default')
-      end
+    def current_driver
+      @current_driver || 'all'
     end
 
-    def get_driver(driver_name)
-      _, klass = @drivers.find { |(key, value)| driver_name.match(key) }
-      raise ArgumentError, "no suitable driver found for #@current_driver}" if klass.nil?
-      klass
-    end
-
-    # Defines which driver will translate Relational's commands into SQL ones
     def define_driver(driver)
-      @instance = nil
-      @current_driver = driver
-    end
-
-    def register_driver(driver, klass)
-      @drivers ||= []
-      @drivers.insert(0, [driver, klass])
+      @current_driver = driver.to_s
     end
 
     # define_function defines a function in SQL. For instance, you can define
@@ -36,11 +19,12 @@ module Relational
     #   postgresql: proc { |me, p| ["COMPARE_PG(?, ?) == 0", [p1, p2]] }
     #   mysql: proc { |me, p| ["CMP_MYSQL(?, ?) != 0", [p1, p2]] }
     def define_function(function, functions_for_drivers)
+      @functions ||= {}
       number_of_params = 0
 
       functions_for_drivers.each do |driver, body|
-        driver = driver == :all ? 'default' : driver.to_s
-        get_driver(driver).add_function(function, body)
+        @functions[driver.to_s] ||= {}
+        @functions[driver.to_s][function] = body
         number_of_params = body.arity - 1
       end
 
@@ -57,6 +41,18 @@ module Relational
         end
 
         Relational::Attributes::Function.new(function, self, params)
+      end
+    end
+
+    def partial_for_function(function, attribute, params)
+      functions_for_current = @functions.fetch(current_driver) { {} }
+      function =  functions_for_current[function] || @functions['all'][function]
+      result = function.call(attribute, *params)
+      if result.is_a?(Relational::PartialStatement)
+        result
+      else
+        query, params = result
+        Relational::PartialStatement.new(query, params)
       end
     end
   end
