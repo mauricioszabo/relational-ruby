@@ -12,5 +12,13 @@ module Relational::Adapters
 
       name.foobar(10).should have_pseudo_sql("FOO_BAR(examples.name, 10)")
     end
+
+    it 'creates a function in SQL returning a PartialStatement' do
+      Relational::Adapters.define_function :foobaz, all: ->(me, param) do
+        Relational::PartialStatement.new("FOO_BAZ(#{me.partial.query}, ?)", [param])
+      end
+
+      name.foobaz(10).should have_pseudo_sql("FOO_BAZ(examples.name, 10)")
+    end
   end
 end

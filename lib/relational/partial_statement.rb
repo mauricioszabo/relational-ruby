@@ -13,12 +13,18 @@ module Relational
       @query.gsub('?') do
         attribute = attributes.shift
 
-        case attribute
-          when String then "'#{attribute.gsub("'", "''")}'"
-          when nil then "NULL"
-          else attribute.to_s
-        end
+        escape_attr(attribute)
       end
     end
+
+    def escape_attr(attribute)
+      case attribute
+        when String then "'#{attribute.gsub("'", "''")}'"
+        when Array then attribute.map { |a| escape_attr(a) }.join(",")
+        when nil then "NULL"
+        else attribute.to_s
+      end
+    end
+    private :escape_attr
   end
 end

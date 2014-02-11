@@ -44,7 +44,7 @@ module Relational
         number_of_params = body.arity - 1
       end
 
-      Relational::Attributes::AttributeLike.send(:define_method, function) do |*params|
+      Relational::Attributes::Modifiable.send(:define_method, function) do |*params|
         if(number_of_params < 0)
           required_params = number_of_params.abs - 1
           if params.size < required_params
@@ -59,7 +59,5 @@ module Relational
         Relational::Attributes::Function.new(function, self, params)
       end
     end
-
-    register_driver('default', Default)
   end
 end

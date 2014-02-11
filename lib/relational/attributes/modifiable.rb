@@ -1,4 +1,5 @@
 require_relative 'attribute_like'
+require_relative 'none'
 
 module Relational
   module Attributes
@@ -7,46 +8,75 @@ module Relational
         self == nil
       end
 
-      Relational::Adapters.define_function :==, all: ->(this, operand) {
+      def self.define_function(function, string = "#{function.to_s.upcase}($1)")
+        Relational::Adapters.define_function function, all: ->(this) {
+          partial = this.partial
+          query = string.sub('$1', partial.query)
+          [query, partial.attributes]
+        }
+      end
+
+      def self.define_function2(function, string)
+        Relational::Adapters.define_function function, all: ->(this, operand) {
+          partial = this.partial
+          operand_p = Relational::Attributes.wrap(operand).partial
+          query = string.sub('$1', partial.query).sub('$2', operand_p.query)
+          [query, partial.attributes + operand_p.attributes]
+        }
+      end
+
+      in_clause = ->(this, operand) do
         partial = this.partial
         operand_p = Relational::Attributes.wrap(operand).partial
-        ["#{partial.query} = #{operand_p.query}", partial.attributes + operand_p.attributes]
+        Relational::PartialStatement.new(
+          "#{partial.query} IN (#{operand_p.query})",
+          partial.attributes + operand_p.attributes
+        )
+      end
+
+      Relational::Adapters.define_function :in?,
+        all: in_clause,
+        oracle: ->(this, operand) {
+          partial = this.partial
+          queries = []
+          attributes = partial.attributes
+          operand.each_slice(1000) do |slice|
+            operand_p = Relational::Attributes.wrap(slice).partial
+            attributes += operand_p.attributes
+            queries << "#{partial.query} IN (#{operand_p.query})"
+          end
+          ["(#{queries.join(" OR ")})", attributes]
       }
 
-      Relational::Adapters.define_function :!=, all: ->(this, operand) {
+      Relational::Adapters.define_function :not_in?, all: ->(this, operand) {
         partial = this.partial
         operand_p = Relational::Attributes.wrap(operand).partial
-        ["#{partial.query} <> #{operand_p.query}", partial.attributes + operand_p.attributes]
+        ["#{partial.query} NOT IN (#{operand_p.query})", partial.attributes + operand_p.attributes]
       }
 
-      %w[< <= > >=].each do |operator|
-        Relational::Adapters.define_function operator, all: ->(this, operand) {
-          partial = this.partial
-          operand_p = Relational::Attributes.wrap(operand).partial
-          ["#{partial.query} #{operator} #{operand_p.query}", partial.attributes + operand_p.attributes]
-        }
-      end
+      define_function2 :==, '$1 = $2'
+      define_function2 :!=, '$1 <> $2'
+      define_function2 :<, '$1 < $2'
+      define_function2 :>, '$1 > $2'
+      define_function2 :<=, '$1 <= $2'
+      define_function2 :>=, '$1 >= $2'
+      define_function2 :=~, '$1 LIKE $2'
+      define_function2 :like, '$1 LIKE $2'
+      define_function2 :!~, '$1 NOT LIKE $2'
+      define_function2 :not_like, '$1 NOT LIKE $2'
 
-      Relational::Adapters.define_function :sum, all: ->(this) {
-        partial = this.partial
-        ["SUM(#{partial.query})", partial.attributes]
-      }
+      define_function :null?, "$1 IS NULL"
+      define_function :not_null?, "$1 IS NOT NULL"
+      define_function :!, "NOT($1)"
 
-      [:like, :=~].each do |like|
-        Relational::Adapters.define_function like, all: ->(this, operand){
-          partial = this.partial
-          operand_p = Relational::Attributes.wrap(operand).partial
-          ["#{partial.query} LIKE #{operand_p.query}", partial.attributes + operand_p.attributes]
-        }
-      end
+      define_function2 :|, "$1 OR $2"
+      define_function2 :&, "$1 AND $2"
 
-      [:not_like, :!~].each do |like|
-        Relational::Adapters.define_function like, all: ->(this, operand){
-          partial = this.partial
-          operand_p = Relational::Attributes.wrap(operand).partial
-          ["#{partial.query} NOT LIKE #{operand_p.query}", partial.attributes + operand_p.attributes]
-        }
-      end
+      define_function :sum
+      define_function :avg
+      define_function :max
+      define_function :min
+      define_function :count
     end
   end
 end
