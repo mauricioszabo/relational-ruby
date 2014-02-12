@@ -5,6 +5,15 @@ module Relational
   class Partial
     extend Lazy
 
+    def self.wrap(attribute)
+      if(attribute.is_a?(Partial))
+        attribute
+      else
+        Relational::Attributes::Literal.new(attribute)
+      end
+    end
+
+
     def append(*partials)
       partial = self.partial
       query = partial.query

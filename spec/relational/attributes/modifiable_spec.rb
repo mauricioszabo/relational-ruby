@@ -66,8 +66,8 @@ module Relational
     it "adds an OR or AND condition" do
       c1 = (name == "Foo")
       c2 = (table[:id] == 10)
-      (c1 | c2).should have_pseudo_sql("examples.name = 'Foo' OR examples.id = 10")
-      (c1 & c2).should have_pseudo_sql("examples.name = 'Foo' AND examples.id = 10")
+      (c1 | c2).should have_pseudo_sql("(examples.name = 'Foo' OR examples.id = 10)")
+      (c1 & c2).should have_pseudo_sql("(examples.name = 'Foo' AND examples.id = 10)")
     end
 
     it 'supports SUM' do

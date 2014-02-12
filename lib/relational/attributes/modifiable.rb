@@ -20,7 +20,7 @@ module Relational
       def self.define_function2(function, string)
         Relational::Adapter.define_function function, all: ->(this, operand) {
           partial = this.partial
-          operand_p = Relational::Attributes.wrap(operand).partial
+          operand_p = Relational::Partial.wrap(operand).partial
           query = string.sub('$1', partial.query).sub('$2', operand_p.query)
           [query, partial.attributes + operand_p.attributes]
         }
@@ -28,33 +28,25 @@ module Relational
 
       in_clause = ->(this, operand) do
         partial = this.partial
-        operand_p = Relational::Attributes.wrap(operand).partial
+        operand_p = Relational::Partial.wrap(operand).partial
         Relational::PartialStatement.new(
           "#{partial.query} IN (#{operand_p.query})",
           partial.attributes + operand_p.attributes
         )
       end
 
-      #Relational::Adapter.define_function :in?,
-      #  all: in_clause,
-      #  oracle: ->(this, operand) {
-      #    partial = this.partial
-      #    queries = []
-      #    attributes = partial.attributes
-      #    operand.each_slice(1000) do |slice|
-      #      operand_p = Relational::Attributes.wrap(slice).partial
-      #      attributes += operand_p.attributes
-      #      queries << "#{partial.query} IN (#{operand_p.query})"
-      #    end
-      #    ["(#{queries.join(" OR ")})", attributes]
-      #}
-
-      Relational::Adapter.define_custom_method :in?,
-        all: ->(params) { Relational::Comparissions::In.new(self, params) }
+      Relational::Adapter.define_custom_method :in?, all: ->(params) {
+        Relational::Comparissions::In.new(self, params)
+      }, oracle: ->(params) {
+        ins = params.each_slice(1000).map do |slice|
+          Relational::Comparissions::In.new(self, slice)
+        end
+        Relational::Comparissions::Or.new(ins)
+      }
 
       Relational::Adapter.define_function :not_in?, all: ->(this, operand) {
         partial = this.partial
-        operand_p = Relational::Attributes.wrap(operand).partial
+        operand_p = Relational::Partial.wrap(operand).partial
         ["#{partial.query} NOT IN (#{operand_p.query})", partial.attributes + operand_p.attributes]
       }
 
@@ -73,8 +65,16 @@ module Relational
       define_function :not_null?, "$1 IS NOT NULL"
       define_function :!, "NOT($1)"
 
-      define_function2 :|, "$1 OR $2"
-      define_function2 :&, "$1 AND $2"
+      #define_function2 :|, "$1 OR $2"
+      #define_function2 :&, "$1 AND $2"
+
+      Relational::Adapter.define_custom_method :|, all: ->(*items) {
+        Relational::Comparissions::Or.new([self, *items])
+      }
+
+      Relational::Adapter.define_custom_method :&, all: ->(*items) {
+        Relational::Comparissions::And.new([self, *items])
+      }
 
       define_function :sum
       define_function :avg
