@@ -1,5 +1,6 @@
 require_relative 'attribute_like'
 require_relative 'none'
+require_relative '../adapter'
 
 module Relational
   module Attributes
@@ -9,7 +10,7 @@ module Relational
       end
 
       def self.define_function(function, string = "#{function.to_s.upcase}($1)")
-        Relational::Adapters.define_function function, all: ->(this) {
+        Relational::Adapter.define_function function, all: ->(this) {
           partial = this.partial
           query = string.sub('$1', partial.query)
           [query, partial.attributes]
@@ -17,7 +18,7 @@ module Relational
       end
 
       def self.define_function2(function, string)
-        Relational::Adapters.define_function function, all: ->(this, operand) {
+        Relational::Adapter.define_function function, all: ->(this, operand) {
           partial = this.partial
           operand_p = Relational::Attributes.wrap(operand).partial
           query = string.sub('$1', partial.query).sub('$2', operand_p.query)
@@ -34,21 +35,24 @@ module Relational
         )
       end
 
-      Relational::Adapters.define_function :in?,
-        all: in_clause,
-        oracle: ->(this, operand) {
-          partial = this.partial
-          queries = []
-          attributes = partial.attributes
-          operand.each_slice(1000) do |slice|
-            operand_p = Relational::Attributes.wrap(slice).partial
-            attributes += operand_p.attributes
-            queries << "#{partial.query} IN (#{operand_p.query})"
-          end
-          ["(#{queries.join(" OR ")})", attributes]
-      }
+      #Relational::Adapter.define_function :in?,
+      #  all: in_clause,
+      #  oracle: ->(this, operand) {
+      #    partial = this.partial
+      #    queries = []
+      #    attributes = partial.attributes
+      #    operand.each_slice(1000) do |slice|
+      #      operand_p = Relational::Attributes.wrap(slice).partial
+      #      attributes += operand_p.attributes
+      #      queries << "#{partial.query} IN (#{operand_p.query})"
+      #    end
+      #    ["(#{queries.join(" OR ")})", attributes]
+      #}
 
-      Relational::Adapters.define_function :not_in?, all: ->(this, operand) {
+      Relational::Adapter.define_custom_method :in?,
+        all: ->(params) { Relational::Comparissions::In.new(self, params) }
+
+      Relational::Adapter.define_function :not_in?, all: ->(this, operand) {
         partial = this.partial
         operand_p = Relational::Attributes.wrap(operand).partial
         ["#{partial.query} NOT IN (#{operand_p.query})", partial.attributes + operand_p.attributes]

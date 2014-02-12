@@ -1,5 +1,5 @@
 module Relational
-  module Adapters
+  module Adapter
     extend self
 
     def current_driver
@@ -53,6 +53,37 @@ module Relational
       else
         query, params = result
         Relational::PartialStatement.new(query, params)
+      end
+    end
+
+    def define_custom_method(method, methods_for_drivers)
+      @methods ||= {}
+      number_of_params = 0
+
+      methods_for_drivers.each do |driver, body|
+        @methods[driver.to_s] ||= {}
+        @methods[driver.to_s][method] = body
+        number_of_params = body.arity
+      end
+
+      at_methods = @methods
+      current_driver = -> { current_driver() }
+
+      Relational::Attributes::Modifiable.send(:define_method, method) do |*params|
+        if(number_of_params < 0)
+          required_params = number_of_params.abs - 1
+          if params.size < required_params
+            raise ArgumentError, "wrong number of arguments (#{params.size} for #{required_params}+)"
+          end
+        else
+          if params.size != number_of_params
+            raise ArgumentError, "wrong number of arguments (#{params.size} for #{number_of_params})"
+          end
+        end
+
+        methods_for_current = at_methods.fetch(current_driver.call) { {} }
+        method_block =  methods_for_current[method] || at_methods['all'][method]
+        instance_exec(*params, &method_block)
       end
     end
   end

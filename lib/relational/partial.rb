@@ -1,5 +1,10 @@
+require_relative 'lazy'
+require_relative 'partial_statement'
+
 module Relational
   class Partial
+    extend Lazy
+
     def append(*partials)
       partial = self.partial
       query = partial.query
