@@ -18,7 +18,7 @@ module Relational
     end
 
     it 'can represent a literal' do
-      Attributes.wrap('Foo').should have_pseudo_sql("'Foo'")
+      Partial.wrap('Foo').should have_pseudo_sql("'Foo'")
     end
   end
 end

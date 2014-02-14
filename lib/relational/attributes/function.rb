@@ -9,8 +9,7 @@ module Relational
       end
 
       lazy :partial do
-        adapter = Relational::Adapters.instance
-        adapter.partial_for_function(@function, @attribute, @params)
+        Relational::Adapter.partial_for_function(@function, @attribute, @params)
       end
     end
   end

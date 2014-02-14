@@ -5,7 +5,7 @@ module Relational
     let(:table) { Tables::Table.new("examples") }
     let(:name) { Attributes::Attribute.new(table, "name") }
 
-    before { Relational::Adapters.define_driver('default') }
+    before { Relational::Adapter.define_driver('all') }
 
     it 'defines equalities with values' do
       (name == 'foo').should have_pseudo_sql("examples.name = 'foo'")
@@ -53,7 +53,7 @@ module Relational
     end
 
     it "splits IN into multiple clauses if in Oracle" do
-      Relational::Adapters.define_driver 'oracle'
+      Relational::Adapter.define_driver 'oracle'
       numbers = (1..1500).to_a
       result = name.in?(numbers)
       expected = "(examples.name IN (#{
@@ -66,8 +66,8 @@ module Relational
     it "adds an OR or AND condition" do
       c1 = (name == "Foo")
       c2 = (table[:id] == 10)
-      (c1 | c2).should have_pseudo_sql("examples.name = 'Foo' OR examples.id = 10")
-      (c1 & c2).should have_pseudo_sql("examples.name = 'Foo' AND examples.id = 10")
+      (c1 | c2).should have_pseudo_sql("(examples.name = 'Foo' OR examples.id = 10)")
+      (c1 & c2).should have_pseudo_sql("(examples.name = 'Foo' AND examples.id = 10)")
     end
 
     it 'supports SUM' do
