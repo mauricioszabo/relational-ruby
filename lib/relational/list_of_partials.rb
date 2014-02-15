@@ -49,6 +49,12 @@ module Relational
     end
 
     lazy :partial do
+      queries, attributes = queries_and_attributes
+      query = queries.join(' ')
+      Relational::PartialStatement.new(query, attributes)
+    end
+
+    def queries_and_attributes
       queries = []
       attributes = @list_of_attributes.flat_map do |attribute|
         partial = attribute.partial
@@ -56,9 +62,9 @@ module Relational
         partial.attributes
       end
 
-      query = queries.join(', ')
-      Relational::PartialStatement.new(query, attributes)
+      [queries, attributes]
     end
+    private :queries_and_attributes
   end
 end
 

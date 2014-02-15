@@ -4,8 +4,13 @@ module Relational
   describe ListOfPartials do
     let(:people) { Relational::Tables::Table.new('people') }
 
+    it 'represents a list of non-comma-separated partials' do
+      select = ListOfPartials[people.id, people.name, people.age]
+      select.should have_pseudo_sql "people.id people.name people.age"
+    end
+
     it 'defines a list of attributes' do
-      select = ListOfPartials[people.id, people.name, people.age.as('foo')]
+      select = ListOfAttributes[people.id, people.name, people.age.as('foo')]
       select.should have_pseudo_sql "people.id, people.name, foo"
     end
 
