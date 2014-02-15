@@ -24,6 +24,22 @@ module Relational
           "SELECT people.* FROM people HAVING people.id = 10")
       end
 
+      it 'creates a query with joins' do
+        addresses = Relational::Tables::Table.new('addresses')
+        logins = Relational::Tables::Table.new('logins')
+
+        join_selector = selector.copy(join: ListOfPartials[
+          Joins::LeftJoin.new(addresses, addresses[:people_id] == people[:id]),
+          Joins::InnerJoin.new(logins, logins[:people_id] == people[:id]),
+        ])
+
+        join_selector.should have_pseudo_sql(
+          "SELECT people.* FROM people " +
+          "LEFT JOIN addresses ON addresses.people_id = people.id " +
+          "INNER JOIN logins ON logins.people_id = people.id"
+        )
+      end
+
       it 'creates a query with ORDER BY clause' do
         selector.copy(order: ListOfPartials[people[:name]]).should have_pseudo_sql(
           "SELECT people.* FROM people ORDER BY people.name")
