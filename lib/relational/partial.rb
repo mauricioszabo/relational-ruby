@@ -23,12 +23,6 @@ module Relational
       end
     end
 
-    def append(*partials)
-      partials.inject(self) do |acc, partial|
-        acc.append_with("", partial)
-      end
-    end
-
     def append_with(query, partial)
       this_partial = self.partial
       other_partial = partial.partial
