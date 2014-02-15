@@ -9,7 +9,7 @@ module Relational
 
     DEFAULT_INIT = {
       select: Select,
-      from: '',
+      from: ListOfAttributes,
       where: Attributes::None,
       group: ListOfAttributes,
       having: Attributes::None,
@@ -21,6 +21,10 @@ module Relational
 
     def initialize(query_options={})
       @query_options = DEFAULT_INIT.merge(query_options)
+    end
+
+    def as(alias_name)
+      Relational::Tables::Alias.new(alias_name, self)
     end
 
     lazy :partial do

@@ -14,6 +14,14 @@ module Relational
         selector2.should have_pseudo_sql "SELECT people.* FROM people WHERE people.id = 10"
       end
 
+      it 'creates a query with multiple tables on FROM clause' do
+        selector2 = selector.copy(from: ListOfAttributes[people, selector.as('other')])
+        selector2.should have_pseudo_sql (
+          "SELECT people.* FROM people, ("+
+          "SELECT people.* FROM people) other"
+        )
+      end
+
       it 'creates a query with GROUP BY clause' do
         selector.copy(group: ListOfPartials[people[:name]]).should have_pseudo_sql(
           "SELECT people.* FROM people GROUP BY people.name")
