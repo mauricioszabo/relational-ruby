@@ -44,10 +44,13 @@ module Relational
         Relational::Comparissions::Or.new(ins)
       }
 
-      Relational::Adapter.define_function :not_in?, all: ->(this, operand) {
-        partial = this.partial
-        operand_p = Relational::Partial.wrap(operand).partial
-        ["#{partial.query} NOT IN (#{operand_p.query})", partial.attributes + operand_p.attributes]
+      Relational::Adapter.define_custom_method :not_in?, all: ->(params) {
+        Relational::Comparissions::In.new(self, params, true)
+      }, oracle: ->(params) {
+        ins = params.each_slice(1000).map do |slice|
+          Relational::Comparissions::In.new(self, slice, true)
+        end
+        Relational::Comparissions::And.new(ins)
       }
 
       define_function2 :==, '$1 = $2'
@@ -65,9 +68,6 @@ module Relational
       define_function :not_null?, "$1 IS NOT NULL"
       define_function :!, "NOT($1)"
 
-      #define_function2 :|, "$1 OR $2"
-      #define_function2 :&, "$1 AND $2"
-
       Relational::Adapter.define_custom_method :|, all: ->(*items) {
         Relational::Comparissions::Or.new([self, *items])
       }
@@ -81,6 +81,11 @@ module Relational
       define_function :max
       define_function :min
       define_function :count
+      define_function :count_distinct, "COUNT(DISTINCT $1)"
+
+      define_function :length
+      define_function :upper
+      define_function :lower
     end
   end
 end
