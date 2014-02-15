@@ -5,6 +5,16 @@ module Relational
   class Partial
     extend Lazy
 
+    class Simple < Partial
+      def initialize(query, attributes)
+        @query, @attributes = query, attributes
+      end
+
+      lazy :partial do
+        PartialStatement.new(@query, @attributes)
+      end
+    end
+
     def self.wrap(attribute)
       if(attribute.is_a?(Partial))
         attribute
@@ -13,19 +23,23 @@ module Relational
       end
     end
 
-
     def append(*partials)
-      partial = self.partial
-      query = partial.query
-      attributes = partial.attributes
-
-      partials.each do |partial|
-        partial_statement = partial.partial
-        query += " " + partial_statement.query
-        attributes += partial_statement.attributes
+      partials.inject(self) do |acc, partial|
+        acc.append_with("", partial)
       end
+    end
 
-      PartialStatement.new(query, attributes)
+    def append_with(query, partial)
+      this_partial = self.partial
+      other_partial = partial.partial
+      Simple.new(
+        "#{this_partial.query} #{query}#{other_partial.query}",
+        this_partial.attributes + other_partial.attributes
+      )
+    end
+
+    def partial
+      raise NotImplementedError.new("missing implementation")
     end
   end
 end
