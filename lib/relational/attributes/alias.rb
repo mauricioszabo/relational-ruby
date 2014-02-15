@@ -1,6 +1,8 @@
+require_relative 'modifiable'
+
 module Relational
   module Attributes
-    class Alias < AttributeLike
+    class Alias < Modifiable
       def initialize(alias_name, partial)
         @alias_name, @partial = alias_name, partial
       end

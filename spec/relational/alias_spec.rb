@@ -25,6 +25,12 @@ describe 'Aliases' do
       people[:id].as("foo").should have_pseudo_sql "foo"
     end
 
+    it 'renames comparissions like AND or OR' do
+      comparisssion = ((people[:id] == 10) | (people[:id] == 20)).as("foo")
+      comparisssion.select_partial.to_pseudo_sql.should == "((people.id = 10 OR people.id = 20)) foo"
+      comparisssion.should have_pseudo_sql "foo"
+    end
+
     it "renames itself" do
       people[:id].as("foo").as("bar").should have_pseudo_sql "bar"
     end

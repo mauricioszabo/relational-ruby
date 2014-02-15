@@ -1,9 +1,11 @@
 require_relative '../partial'
-require_relative '../attributes/literal'
+require_relative '../attributes/aliasable'
 
 module Relational
   module Comparissions
     class And < Partial
+      include Attributes::Aliasable
+
       def initialize(items)
         @items = items
       end
