@@ -28,7 +28,8 @@ module Relational
     end
 
     lazy :partial do
-      partial = opt(:select).append_with("FROM ", opt(:from))
+      partial = opt(:select)
+      partial = partial.append_with("FROM ", opt(:from)) unless opt(:from).empty?
       partial = partial.append_with("", opt(:join)) unless opt(:join).empty?
       partial = partial.append_with("WHERE ", opt(:where)) if opt(:where) != Attributes::None
       partial = partial.append_with("GROUP BY ", opt(:group)) unless opt(:group).empty?

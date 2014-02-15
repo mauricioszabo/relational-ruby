@@ -14,6 +14,11 @@ module Relational
         selector2.should have_pseudo_sql "SELECT people.* FROM people WHERE people.id = 10"
       end
 
+      it 'creates a query without FROM (PostgreSQL and MySQL supports this)' do
+        selector = Selector.new(select: Select[Partial.wrap(1)])
+        selector.should have_pseudo_sql "SELECT 1"
+      end
+
       it 'creates a query with multiple tables on FROM clause' do
         selector2 = selector.copy(from: ListOfAttributes[people, selector.as('other')])
         selector2.should have_pseudo_sql (
