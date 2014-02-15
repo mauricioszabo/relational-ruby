@@ -1,11 +1,16 @@
+require 'singleton'
 require_relative 'attribute_like'
 
 module Relational
   module Attributes
-    class All < AttributeLike
-      def self.partial
+    class AllClass < AttributeLike
+      include Singleton
+
+      def partial
         PartialStatement.new('*', [])
       end
     end
+
+    All = AllClass.instance
   end
 end
