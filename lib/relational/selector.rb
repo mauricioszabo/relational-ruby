@@ -7,7 +7,7 @@ require_relative 'attributes/none'
 module Relational
   class Selector < Partial
 
-    DEFAULT_INIT = {
+    DEFAULTS = {
       select: Select,
       from: ListOfAttributes,
       where: Attributes::None,
@@ -20,7 +20,7 @@ module Relational
     }
 
     def initialize(query_options={})
-      @query_options = DEFAULT_INIT.merge(query_options)
+      @query_options = DEFAULTS.merge(query_options)
     end
 
     def as(alias_name)
@@ -42,7 +42,6 @@ module Relational
     def opt(key)
       @query_options[key]
     end
-    private :opt
 
     def copy(query_options = {})
       Selector.new(@query_options.merge(query_options))

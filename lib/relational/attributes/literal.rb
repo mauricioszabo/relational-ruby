@@ -10,6 +10,8 @@ module Relational
     end
 
     class Literal < Modifiable
+      attr_reader :literal
+
       def initialize(literal)
         @literal = literal
       end
