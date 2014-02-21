@@ -36,16 +36,39 @@ module Relational::AR
       people.results.to_a.should == [@person2]
     end
 
-    it 'results should be equal results with same attributes' do
-      people1 = People.where(name: 'Bar').results
-      people2 = People.where(name: 'Bar').results
-      people1.should == people2
+    it 'counts the results' do
+      people = People.where(name: 'Foo')
+      people.count.should == 2
     end
 
-    it 'behaves as an array' do
-      people = People.where(name: 'Foo').order(:age).results
-      people.first.age.should == 20
-      people[-1].age.should == 25
+    context 'results' do
+      it 'is equal results with same attributes' do
+        people1 = People.where(name: 'Bar').results
+        people2 = People.where(name: 'Bar').results
+        people1.should == people2
+      end
+
+      it 'behaves as an array' do
+        people = People.where(name: 'Foo').order(:age).results
+        people.first.age.should == 20
+        people[-1].age.should == 25
+      end
+
+      it 'counts' do
+        people = People.where(name: 'Foo').results
+        people.size.should == 2
+      end
+
+      it 'caches results' do
+        Person.should_receive(:instantiate).once.and_return(
+          mock = mock("User"))
+
+        people = People.where(name: "Bar")
+        results = people.cached_results
+
+        results.to_a.should == [mock]
+        results.to_a.should == [mock]
+      end
     end
   end
 end

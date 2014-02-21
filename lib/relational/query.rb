@@ -83,8 +83,13 @@ module Relational
       yield new_query
     end
 
-    def from
-      @from ||= ListOfAttributes[table]
+    def from(*tables)
+      if(tables.empty?)
+        opt(:from)
+      else
+        fields = convert_fields(tables)
+        new_partial_query(from: ListOfAttributes[*fields])
+      end
     end
 
     def where(condition=NO_OPT, &block)
@@ -160,7 +165,7 @@ module Relational
           else
             field
           end
-        else Partial.wrap(field)
+        else [Partial.wrap(field)]
         end
       end
     end
@@ -186,6 +191,18 @@ module Relational
       end
     end
     private :new_partial_query
+
+    def count_query
+      self_alias = self.as('count_query')
+      Selector.new(
+        from: Relational::ListOfAttributes[self_alias],
+        select: Relational::Select[Attributes::All.count.as('count')]
+      )
+    end
+
+    def as(alias_name)
+      selector.as(alias_name)
+    end
 
     def partial
       selector.partial

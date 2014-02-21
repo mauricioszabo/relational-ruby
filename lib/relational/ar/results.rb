@@ -30,6 +30,10 @@ module Relational
       def map_to(row)
         @model.instantiate(row)
       end
+
+      def size
+        @rows.size
+      end
     end
   end
 end

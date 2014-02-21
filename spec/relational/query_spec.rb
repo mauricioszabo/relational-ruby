@@ -11,6 +11,13 @@ module Relational
       result.should have_pseudo_sql "SELECT people.* FROM people"
     end
 
+    it 'subselects using FROM' do
+      ralias = People.where(id: 10).as('p')
+      result = People.from(ralias).select(ralias[:id])
+      result.should have_pseudo_sql "SELECT p.id FROM ("+
+        "SELECT people.* FROM people WHERE people.id = 10) p"
+    end
+
     it "finds records on a table" do
       result = People.where { |p| (p[:id] > 1) & (p[:id] < 3) }.select(:id, :name)
       result.should have_pseudo_sql "SELECT people.id, people.name " +
@@ -74,6 +81,11 @@ module Relational
       result.should have_pseudo_sql "SELECT people.* FROM people ORDER BY (people.id) DESC"
     end
 
+    it 'has a query to count records' do
+      result = People.select(:id).where(id: 10)
+      result.count_query.should have_pseudo_sql "SELECT (COUNT(*)) count FROM (" +
+        "SELECT people.id FROM people WHERE people.id = 10) count_query"
+    end
 
     it 'leaves to the driver how to fetch results' do
       class Something

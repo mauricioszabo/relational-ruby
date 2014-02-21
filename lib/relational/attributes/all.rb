@@ -3,7 +3,7 @@ require_relative 'attribute_like'
 
 module Relational
   module Attributes
-    class AllClass < AttributeLike
+    class AllClass < Modifiable
       include Singleton
 
       def partial
