@@ -23,6 +23,14 @@ module Relational
       end
     end
 
+    def asc
+      Orders::Ascending.new(self)
+    end
+
+    def desc
+      Orders::Descending.new(self)
+    end
+
     def append_with(query, partial)
       this_partial = self.partial
       other_partial = partial.partial
