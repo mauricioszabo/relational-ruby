@@ -1,11 +1,11 @@
 require_relative '../helper'
 
 module Relational
-  class People
-    extend Query
-  end
-
   describe Query do
+    class People
+      extend Query
+    end
+
     it "finds all records on a table" do
       result = People.all
       result.should have_pseudo_sql "SELECT people.* FROM people"
@@ -17,10 +17,28 @@ module Relational
         "FROM people WHERE (people.id > 1 AND people.id < 3)"
     end
 
+    it "finds using rails-like WHERE" do
+      result = People.where(id: 1, name: 'foo')
+      result.should have_pseudo_sql "SELECT people.* FROM people " +
+        "WHERE (people.id = 1 AND people.name = 'foo')"
+    end
+
+    it 'restrict search using "restrict" to define a "AND-WHERE-kind" of condition' do
+      result = People.restrict(name: 'foo').restrict { |p| p[:id] > 10 }
+      result.should have_pseudo_sql "SELECT people.* FROM people " +
+        "WHERE (people.name = 'foo' AND people.id > 10)"
+    end
+
     it "finds records using HAVING" do
       result = People.having { |p| (p[:id] > 1) & (p[:id] < 3) }.select(:id, :name).group(:id)
       result.should have_pseudo_sql "SELECT people.id, people.name FROM people "+
         "GROUP BY people.id HAVING (people.id > 1 AND people.id < 3)"
+    end
+
+    it 'restrict search using "restrict_having" to define a "AND-HAVING-kind" of condition' do
+      result = People.restrict_having(name: 'foo').restrict_having { |p| p[:id] > 10 }
+      result.should have_pseudo_sql "SELECT people.* FROM people " +
+        "HAVING (people.name = 'foo' AND people.id > 10)"
     end
 
     it "finds records reusing 'table' object" do
@@ -46,6 +64,54 @@ module Relational
 
       result = result.select(:age, result.select)
       result.should have_pseudo_sql "SELECT people.age, people.name, people.id FROM people"
+    end
+
+    it "orders the query" do
+      result = People.query { |p| p.order(p[:id].asc) }
+      result.should have_pseudo_sql "SELECT people.* FROM people ORDER BY (people.id) ASC"
+
+      result = People.query { |p| p.order(p[:id].desc) }
+      result.should have_pseudo_sql "SELECT people.* FROM people ORDER BY (people.id) DESC"
+    end
+
+
+    it 'leaves to the driver how to fetch results' do
+      class Something
+        include Query
+        include Mapper
+
+        def results
+          if where.partial.to_pseudo_sql.match("people.name = 'foo'")
+            ['foo']
+          else
+            ['foo', 'bar']
+          end
+        end
+      end
+
+      People.set_composer(Something)
+      People.where(name: 'foo').results.should == ['foo']
+      People.where(name: 'bar').restrict(age: 17).results.should == ['foo', 'bar']
+    end
+
+    it 'extends the "finder" if it is a module' do
+      module People2
+        include Query
+        extend self
+
+        set_table_name 'people'
+
+        def by_name(name)
+          where(where & (table[:name] == name))
+        end
+
+        def by_age(age)
+          where(where & (table[:age] == age))
+        end
+      end
+
+      People2.by_name('foo').by_age(12).should have_pseudo_sql  "SELECT people.* "+
+        "FROM people WHERE (people.name = 'foo' AND people.age = 12)"
     end
 
 #    "join another table" in {
