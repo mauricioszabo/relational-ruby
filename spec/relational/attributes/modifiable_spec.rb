@@ -95,5 +95,11 @@ module Relational
       (name.upper == "UP").should have_pseudo_sql "UPPER(examples.name) = 'UP'"
       (name.lower == "up").should have_pseudo_sql "LOWER(examples.name) = 'up'"
     end
+
+    it 'finds by some loosy-like equality' do
+      (name === 'foo').should have_pseudo_sql("examples.name = 'foo'")
+      (name === ['foo', 'bar']).should have_pseudo_sql("examples.name IN ('foo','bar')")
+      (name === nil).should have_pseudo_sql("examples.name IS NULL")
+    end
   end
 end

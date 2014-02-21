@@ -53,6 +53,14 @@ module Relational
         Relational::Comparissions::And.new(ins)
       }
 
+      def ===(other)
+        case other
+          when NilClass then self.null?
+          when Array then self.in?(other)
+          else self == other
+        end
+      end
+
       define_function2 :==, '$1 = $2'
       define_function2 :!=, '$1 <> $2'
       define_function2 :<, '$1 < $2'
