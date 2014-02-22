@@ -41,11 +41,11 @@ module Relational
         set_composer PartialQuery
       end
 
-      def joins(*joins)
+      def ar_join(*joins)
         create_join(joins, options[:model], :inner)
       end
 
-      def left_joins(*joins)
+      def ar_left_join(*joins)
         create_join(joins, options[:model], :left)
       end
 

@@ -59,17 +59,17 @@ module Relational::AR
       end
 
       it 'joins AR-style' do
-        people = People.joins(:addresses)
+        people = People.ar_join(:addresses)
         people.results.to_a.should == [@person2, @person2]
       end
 
       it 'left joins AR-style' do
-        people = People.left_joins(:addresses)
+        people = People.ar_left_join(:addresses)
         people.results.count.should == 4
       end
 
       it 'nest-joins using a hash syntax' do
-        people = People.joins(addresses: :phones)
+        people = People.ar_join(addresses: :phones)
         people.results.to_a.should == [@person2]
       end
 
@@ -80,13 +80,13 @@ module Relational::AR
           set_model Phone
         end
 
-        Foo.joins(:address).should have_pseudo_sql "SELECT phones.* FROM phones " +
+        Foo.ar_join(:address).should have_pseudo_sql "SELECT phones.* FROM phones " +
           "INNER JOIN addresses ON phones.address_id = addresses.id"
       end
 
       it 'joins has_and_belongs_to_many' do
         Person.has_and_belongs_to_many :phones
-        People.joins(:phones).should have_pseudo_sql "SELECT people.* FROM people " +
+        People.ar_join(:phones).should have_pseudo_sql "SELECT people.* FROM people " +
           "INNER JOIN people_phones ON people.id = people_phones.person_id " +
           "INNER JOIN phones ON people_phones.phone_id = phones.id"
       end
