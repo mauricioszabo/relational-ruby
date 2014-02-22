@@ -101,6 +101,15 @@ module Relational
         "LEFT JOIN addresses ON people.id = addresses.person_id"
     end
 
+    it 'chain joins to reach deeper tables' do
+      zip_codes = People.join(:addresses, :zip_codes)
+        .on { |p, a| p[:id] == a[:person_id] }
+        .on { |a, z| a[:zip_id] == z[:id] }
+
+      zip_codes.should have_pseudo_sql "SELECT people.* FROM people " +
+        "INNER JOIN addresses ON people.id = addresses.person_id " +
+        "INNER JOIN zip_codes ON addresses.zip_id = zip_codes.id"
+    end
 
     it 'has a query to count records' do
       result = People.select(:id).where(id: 10)
