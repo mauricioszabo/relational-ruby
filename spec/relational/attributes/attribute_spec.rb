@@ -17,6 +17,14 @@ module Relational
       Attributes::All.should have_pseudo_sql("*")
     end
 
+    it 'every attribute on select must have COUNT method' do
+      Attributes::All.count.should have_pseudo_sql("COUNT(*)")
+    end
+
+    it 'every attribute on select must have COUNT method' do
+      Attributes::All.count_distinct.should have_pseudo_sql("COUNT(DISTINCT *)")
+    end
+
     it 'can represent every attribute on a table' do
       table.*.should have_pseudo_sql("examples.*")
     end

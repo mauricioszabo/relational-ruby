@@ -6,7 +6,7 @@ module Relational
     let(:name) { Relational::Attributes::Attribute.new(table, "name") }
 
     it 'creates a function in SQL' do
-      Relational::Adapter.define_function :foobar, all: ->(me, param) do
+      Attributes::Modifiable.define_function :foobar, all: ->(me, param) do
         ["FOO_BAR(#{me.partial.query}, ?)", [param]]
       end
 
@@ -14,7 +14,7 @@ module Relational
     end
 
     it 'creates a function in SQL returning a PartialStatement' do
-      Relational::Adapter.define_function :foobaz, all: ->(me, param) do
+      Attributes::Modifiable.define_function :foobaz, all: ->(me, param) do
         Relational::PartialStatement.new("FOO_BAZ(#{me.partial.query}, ?)", [param])
       end
 
@@ -22,7 +22,7 @@ module Relational
     end
 
     it 'creates a method that has different behaviour for each adapter' do
-      Relational::Adapter.define_custom_method :bar, all: -> {
+      Attributes::Modifiable.define_custom_method :bar, all: -> {
         "#{partial.query} Foo"
       }, oracle: -> {
         "#{partial.query} Bar"
