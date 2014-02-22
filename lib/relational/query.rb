@@ -141,8 +141,18 @@ module Relational
       end
     end
 
-    def join
-      @join ||= Selector::DEFAULTS[:join]
+    def join(join_or_table = NO_OPT)
+      if NO_OPT == join_or_table
+        selector.opt(:join)
+      elsif join_or_table.is_a?(ListOfPartials)
+        new_partial_query(join: join_or_table)
+      else
+        Joins::JoinHelper.new(self, join_or_table, :inner)
+      end
+    end
+
+    def left_join(table)
+      Joins::JoinHelper.new(self, table, :left)
     end
 
     def order(*attributes)

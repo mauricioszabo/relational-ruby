@@ -81,6 +81,27 @@ module Relational
       result.should have_pseudo_sql "SELECT people.* FROM people ORDER BY (people.id) DESC"
     end
 
+    it "joins another table" do
+      address = People.join(:addresses).on { |p, a| p[:id] == a[:person_id] }
+      address.should have_pseudo_sql "SELECT people.* FROM people " +
+        "INNER JOIN addresses ON people.id = addresses.person_id"
+    end
+
+    it "joins another with a join object" do
+      table = Tables::Table.new("addresses")
+      join = Joins::InnerJoin.new(table, table[:person_id] == People.table[:id])
+      address = People.join(ListOfPartials[join])
+      address.should have_pseudo_sql "SELECT people.* FROM people " +
+        "INNER JOIN addresses ON addresses.person_id = people.id"
+    end
+
+    it "left joins another table" do
+      address = People.left_join(:addresses).on { |p, a| p[:id] == a[:person_id] }
+      address.should have_pseudo_sql "SELECT people.* FROM people " +
+        "LEFT JOIN addresses ON people.id = addresses.person_id"
+    end
+
+
     it 'has a query to count records' do
       result = People.select(:id).where(id: 10)
       result.count_query.should have_pseudo_sql "SELECT (COUNT(*)) count FROM (" +
@@ -126,23 +147,6 @@ module Relational
         "FROM people WHERE (people.name = 'foo' AND people.age = 12)"
     end
 
-#    "join another table" in {
-#      val address = People join 'scala_addresses on { (p, a) => p('id) == a('person_id) }
-#      results(address) should be === List((1, "Foo"), (1, "Foo"), (2, "Foo"))
-#    }
-#
-#    "join another with a join object" in {
-#      val table = new tables.Table("scala_addresses")
-#      val join = new joins.InnerJoin(table, table('person_id) == People.table('id))
-#      val address = People join Seq(join)
-#      results(address) should be === List((1, "Foo"), (1, "Foo"), (2, "Foo"))
-#    }
-#
-#    "left join another table" in {
-#      val address = People leftJoin 'scala_addresses on { (p, a) => p('id) == a('person_id) }
-#      results(address) should be === List((1, "Foo"), (1, "Foo"), (2, "Foo"), (3, "Bar"))
-#    }
-#
 #    "counts records on table" in {
 #      val names = People query { implicit p => p select ('name.count.as("count"), 'name) group 'name }
 #

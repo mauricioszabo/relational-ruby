@@ -14,19 +14,19 @@ module Relational
     end
 
     def self.+(attribute)
-      Select.new([Partial.wrap(attribute)], false)
+      new([Partial.wrap(attribute)], false)
     end
 
     def +(attribute)
-      Select.new(@list_of_attributes + [Partial.wrap(attribute)], @distinct)
+      self.class.new(@list_of_attributes + [Partial.wrap(attribute)], @distinct)
     end
 
     def self.prepend(attribute)
-      Select.new([Partial.wrap(attribute)], false)
+      new([Partial.wrap(attribute)], false)
     end
 
     def prepend(attribute)
-      Select.new([Partial.wrap(attribute)] + @list_of_attributes, @distinct)
+      self.class.new([Partial.wrap(attribute)] + @list_of_attributes, @distinct)
     end
 
     def [](key)

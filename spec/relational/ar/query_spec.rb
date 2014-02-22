@@ -61,7 +61,7 @@ module Relational::AR
 
       it 'caches results' do
         Person.should_receive(:instantiate).once.and_return(
-          mock = mock("User"))
+          mock = double("User"))
 
         people = People.where(name: "Bar")
         results = people.cached_results
