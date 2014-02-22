@@ -124,6 +124,7 @@ module Relational
         case reflection.macro
           when :has_many then [reflection.active_record_primary_key, reflection.foreign_key]
           when :belongs_to then [reflection.association_foreign_key, reflection.association_primary_key]
+          else raise ActiveRecord::ConfigurationError, "Relational doesn't support #{reflection.macro} associations"
         end
       end
       private :find_foreign_keys
