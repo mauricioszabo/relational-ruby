@@ -24,7 +24,8 @@ module Relational
       end
 
       def [](index)
-        map_to(@rows[index])
+        row = @rows[index]
+        map_to(row) if row
       end
 
       def map_to(row)

@@ -103,6 +103,7 @@ module Relational::AR
         people = People.where(name: 'Foo').order(:age).results
         people.first.age.should == 20
         people[-1].age.should == 25
+        people[10].should be_nil
       end
 
       it 'counts' do

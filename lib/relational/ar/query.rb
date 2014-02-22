@@ -122,7 +122,12 @@ module Relational
       # Thanks, Rails.
       def find_foreign_keys(reflection)
         case reflection.macro
-          when :has_many then [reflection.active_record_primary_key, reflection.foreign_key]
+          when :has_many
+            if(reflection.nested?)
+              raise ActiveRecord::ConfigurationError, "Relational doesn't support has_many :through"
+            else
+              [reflection.active_record_primary_key, reflection.foreign_key]
+            end
           when :belongs_to then [reflection.association_foreign_key, reflection.association_primary_key]
           else raise ActiveRecord::ConfigurationError, "Relational doesn't support #{reflection.macro} associations"
         end
