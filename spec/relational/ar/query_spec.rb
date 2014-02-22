@@ -5,9 +5,11 @@ require_relative '../../helper'
 module Relational::AR
   describe Query do
     class Person < ActiveRecord::Base
+      has_many :addresses
     end
 
     class Address < ActiveRecord::Base
+      belongs_to :person
     end
 
     module People
@@ -39,6 +41,48 @@ module Relational::AR
     it 'counts the results' do
       people = People.where(name: 'Foo')
       people.count.should == 2
+    end
+
+    context 'when joining' do
+      class Phone < ActiveRecord::Base
+        belongs_to :address
+      end
+
+      Address.has_many :phones
+
+      before :all do
+        Phone.connection.execute "CREATE TABLE phones (id INTEGER PRIMARY KEY,
+          number VARCHAR(255), address_id INTEGER)"
+        @person2.addresses.create!(address: "Bar 1")
+        address = @person2.addresses.create!(address: "Bar 2")
+        address.phones.create!(number: '5555-4444')
+      end
+
+      it 'joins AR-style' do
+        people = People.joins(:addresses)
+        people.results.to_a.should == [@person2, @person2]
+      end
+
+      it 'left joins AR-style' do
+        people = People.left_joins(:addresses)
+        people.results.count.should == 4
+      end
+
+      it 'nest-joins using a hash syntax' do
+        people = People.joins(addresses: :phones)
+        people.results.to_a.should == [@person2]
+      end
+
+      it 'joins belongs to' do
+        module Foo
+          include Query
+          extend self
+          set_model Phone
+        end
+
+        Foo.joins(:address).should have_pseudo_sql "SELECT phones.* FROM phones "+
+          "INNER JOIN addresses ON phones.address_id = addresses.id"
+      end
     end
 
     context 'results' do

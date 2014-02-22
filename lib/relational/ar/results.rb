@@ -20,7 +20,7 @@ module Relational
       end
 
       def ==(other)
-        rows == other.rows && model == other.model
+        other.class == self.class && rows == other.rows && model == other.model
       end
 
       def [](index)
