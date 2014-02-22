@@ -2,7 +2,7 @@ require 'relational'
 
 RSpec::Matchers.define :have_pseudo_sql do |sql|
   match do |partial|
-    partial.partial.to_pseudo_sql == sql
+    partial.respond_to?(:partial) && partial.partial.to_pseudo_sql == sql
   end
 
   failure_message_for_should do |partial|

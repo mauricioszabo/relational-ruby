@@ -51,52 +51,82 @@ module Relational
 
       def create_join(join, model, kind)
         case join
-          when Array then join.inject(self) { |s, j| s.create_join(j, model, kind) }
-          when Hash then join.inject(self) do |s, (join, associates)|
+        when Array
+          join.inject(self) { |s, j| s.create_join(j, model, kind) }
+
+        when Hash
+          join.inject(self) do |s, (join, associates)|
             query_joined = s.create_join(join, model, kind)
             reflection = find_reflection(join, model)
 
-            associated_model = extract_model_from(model, reflection.class_name)
+            associated_model = reflection.klass
             query_joined.create_join(associates, associated_model, kind)
           end
-          else join_using(join, model, kind)
+
+        else
+          reflection = find_reflection(join, model)
+          if(reflection.macro == :has_and_belongs_to_many)
+            join_habtm(reflection, model, kind)
+          else
+            join_using(join, reflection, model, kind)
+          end
         end
       end
       protected :create_join
-
-      def extract_model_from(this_model, reflection_model)
-        this_model_name = this_model.name
-        other_has_module_info = reflection_model =~ /::/
-        this_has_no_module_info = this_model_name !~ /::/
-
-        if(other_has_module_info || this_has_no_module_info)
-          reflection_model.constantize
-        else
-          this_module_name = this_model_name.gsub(/(.*)::.*/, '\\1')
-          "#{this_module_name}::#{reflection_model}".constantize
-        end
-      end
-      private :extract_model_from
-
-      def join_using(join_name, model, kind)
-        reflection = find_reflection(join_name, model)
-        this_table = Relational::Tables::Table.new(model.table_name.to_sym)
-        other_table = Relational::Tables::Table.new(reflection.table_name.to_sym)
-
-        condition = this_table[reflection.association_primary_key] == other_table[reflection.foreign_key]
-        if(kind == :left)
-          join(join + Relational::Joins::LeftJoin.new(other_table, condition))
-        else
-          join(join + Relational::Joins::InnerJoin.new(other_table, condition))
-        end
-      end
-      private :join_using
 
       def find_reflection(join_name, model)
         model.reflect_on_association(join_name) or raise ActiveRecord::ConfigurationError,
           "Association named '#{join_name}' was not found on #{model}."
       end
       private :find_reflection
+
+      def join_habtm(reflection, model, kind)
+        join_table_name = reflection.options[:join_table]
+        make_join(
+          #Join table first
+          model.table_name, join_table_name, #Tables
+          reflection.active_record_primary_key, reflection.foreign_key, #Fields
+          kind
+        ).make_join(
+          #Now destination table
+          join_table_name, reflection.klass.table_name, #Tables
+          reflection.association_foreign_key, reflection.association_primary_key, #Fields
+          kind
+        )
+      end
+      private :join_habtm
+
+      def join_using(join_name, reflection, model, kind)
+        this_field, other_field = find_foreign_keys(reflection)
+
+        make_join(model.table_name, reflection.table_name, this_field, other_field, kind)
+      end
+      private :join_using
+
+      def make_join(this_table, other_table, this_field, other_field, kind)
+        this_table = Relational::Tables::Table.new(this_table)
+        other_table = Relational::Tables::Table.new(other_table)
+        condition = this_table[this_field] == other_table[other_field]
+        if(kind == :left)
+          join(join + Relational::Joins::LeftJoin.new(other_table, condition))
+        else
+          join(join + Relational::Joins::InnerJoin.new(other_table, condition))
+        end
+      end
+      protected :make_join
+
+      # Ok, before I start, let's say how I hate Rails internals:
+      # You could have two methods, informing which keys I would use in a join-but no,
+      # you MUST have these four methods that, depending on each association you're
+      # using, their meaning it's different. So, here we are, making a mess of our code.
+      # Thanks, Rails.
+      def find_foreign_keys(reflection)
+        case reflection.macro
+          when :has_many then [reflection.active_record_primary_key, reflection.foreign_key]
+          when :belongs_to then [reflection.association_foreign_key, reflection.association_primary_key]
+        end
+      end
+      private :find_foreign_keys
     end
   end
 end

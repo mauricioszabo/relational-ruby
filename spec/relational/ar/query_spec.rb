@@ -73,15 +73,22 @@ module Relational::AR
         people.results.to_a.should == [@person2]
       end
 
-      it 'joins belongs to' do
+      it 'joins belongs_to' do
         module Foo
           include Query
           extend self
           set_model Phone
         end
 
-        Foo.joins(:address).should have_pseudo_sql "SELECT phones.* FROM phones "+
+        Foo.joins(:address).should have_pseudo_sql "SELECT phones.* FROM phones " +
           "INNER JOIN addresses ON phones.address_id = addresses.id"
+      end
+
+      it 'joins has_and_belongs_to_many' do
+        Person.has_and_belongs_to_many :phones
+        People.joins(:phones).should have_pseudo_sql "SELECT people.* FROM people " +
+          "INNER JOIN people_phones ON people.id = people_phones.person_id " +
+          "INNER JOIN phones ON people_phones.phone_id = phones.id"
       end
     end
 
