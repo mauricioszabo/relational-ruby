@@ -1,9 +1,11 @@
-require_relative 'partial'
+require_relative 'query/joins'
 
 module Relational
   module Query
     class NO_OPT
     end
+
+    include Query::Joins
 
     module Mapper
       def initialize(options)
@@ -147,12 +149,12 @@ module Relational
       elsif joins_or_tables.size == 1 && joins_or_tables[0].is_a?(ListOfPartials)
         new_partial_query(join: joins_or_tables[0])
       else
-        Joins::JoinHelper.new(self, table, joins_or_tables, :inner)
+        Relational::Joins::JoinHelper.new(self, table, joins_or_tables, :inner)
       end
     end
 
     def left_join(*tables)
-      Joins::JoinHelper.new(self, table, tables, :left)
+      Relational::Joins::JoinHelper.new(self, table, tables, :left)
     end
 
     def order(*attributes)
