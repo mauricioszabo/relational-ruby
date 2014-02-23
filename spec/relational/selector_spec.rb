@@ -59,26 +59,48 @@ module Relational
       end
     end
 
-    #it "searches for records in a database" do
-    #  selector2 = selector.copy(where: (people("id") <= 2), connection=connection)
-    #  ids = selector2.results.map(_ attribute 'id as Int)
-    #  ids.toList should be === List(1, 2)
-    #end
+    context 'with pagination' do
+      it 'LIMITs the records' do
+        selector.copy(limit: 3).should have_pseudo_sql "SELECT people.* FROM people LIMIT 3"
+      end
 
-    #  "search with a string" in {
-    #    val selector2 = selector.copy(where=(people("name") == "Foo"), connection=connection)
-    #    val ids = selector2.results.map(_ attribute 'id as Int)
-    #    ids.toList should be === List(1, 2)
-    #  }
+      it 'OFFSETs the records' do
+        selector.copy(offset: 4).should have_pseudo_sql "SELECT people.* FROM people OFFSET 4"
+      end
 
-    #  "select using operations" in {
-    #    val selector2 = selector.copy(
-    #      select=Select.select(people, people('id) == 1),
-    #      connection=connection
-    #    )
-    #    val results = selector2.results.map(_.attribute.values.toList(0).value).toList
-    #    results should be === List("true", "false", "false")
-    #  }
+      context "on Oracle" do
+        before do
+          Relational::Adapter.define_driver 'oracle'
+        end
+
+        it 'LIMITs the records' do
+          selector.copy(limit: 3).should have_pseudo_sql(
+            %{SELECT * FROM
+              (SELECT "pagination 1".*, rownum "oracle row" FROM
+                (SELECT people.* FROM people) "pagination 1") "pagination 2"
+            WHERE "oracle row" <= 3}.gsub(/\s*\n\s*/, ' ')
+          )
+        end
+
+        it 'OFFSETs the records' do
+          selector.copy(offset: 2).should have_pseudo_sql(
+            %{SELECT * FROM
+              (SELECT "pagination 1".*, rownum "oracle row" FROM
+                (SELECT people.* FROM people) "pagination 1") "pagination 2"
+            WHERE "oracle row" >= 2}.gsub(/\s*\n\s*/, ' ')
+          )
+        end
+
+        it 'LIMITs OFFSETs the records' do
+          selector.copy(limit: 3, offset: 2).should have_pseudo_sql(
+            %{SELECT * FROM
+              (SELECT "pagination 1".*, rownum "oracle row" FROM
+                (SELECT people.* FROM people) "pagination 1") "pagination 2"
+            WHERE "oracle row" >= 2 AND "oracle row" <= 5}.gsub(/\s*\n\s*/, ' ')
+          )
+        end
+      end
+    end
 
     #  "With pagination" should {
     #    "paginate the results" in {

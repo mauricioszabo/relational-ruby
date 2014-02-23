@@ -3,9 +3,11 @@ require_relative 'partial'
 require_relative 'select'
 require_relative 'list_of_attributes'
 require_relative 'attributes/none'
+require_relative 'adapter/function_definition'
 
 module Relational
   class Selector < Partial
+    extend Adapter::FunctionDefinition
 
     DEFAULTS = {
       select: Select,
@@ -36,8 +38,54 @@ module Relational
       partial = partial.append_with("HAVING ", opt(:having)) if opt(:having) != Attributes::None
       partial = partial.append_with("ORDER BY ", opt(:order)) unless opt(:order).empty?
 
-      partial.partial
+      treat_pagination(partial)
     end
+
+    define_custom_method :treat_pagination, all: ->(partial) {
+      partial_statement = partial.partial
+      query = partial_statement.query
+      attributes = partial_statement.attributes
+
+      if opt(:limit).to_i >= 0
+        query += " LIMIT ?"
+        attributes += [opt(:limit)]
+      end
+
+      if opt(:offset).to_i >= 0
+        query += " OFFSET ?"
+        attributes += [opt(:offset)]
+      end
+
+      PartialStatement.new(query, attributes)
+    }, oracle: ->(partial) {
+      all = Attributes::All
+      if(opt(:limit).to_i >= 0 || opt(:offset).to_i >= 0)
+        query = partial.partial.query
+        attributes = partial.partial.attributes
+
+        wheres = []
+        offset = opt(:offset).to_i
+        if offset > 0
+          wheres << %{"oracle row" >= ?}
+          attributes += [offset]
+        end
+
+        limit = opt(:limit).to_i
+        if limit > 0
+          offset = 0 if offset < 0
+          wheres << %{"oracle row" <= ?}
+          attributes += [limit + offset]
+        end
+
+
+        query = "SELECT * FROM (SELECT " +
+          %{"pagination 1".*, rownum "oracle row" FROM (#{query}) "pagination 1") "pagination 2"} +
+          " WHERE " + wheres.join(" AND ")
+        PartialStatement.new(query, attributes)
+      else
+        partial.partial
+      end
+    }
 
     def opt(key)
       @query_options[key]

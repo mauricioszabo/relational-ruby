@@ -66,7 +66,7 @@ module Relational
         # TODO: Precisa do bloco?
         current_driver = -> { Adapter.current_driver() }
 
-        Relational::Attributes::Modifiable.send(:define_method, method) do |*params|
+        define_method(method) do |*params|
           if(number_of_params < 0)
             required_params = number_of_params.abs - 1
             if params.size < required_params
