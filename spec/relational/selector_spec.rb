@@ -10,8 +10,14 @@ module Relational
     context 'on SQL creation' do
       it "creates a query with or without WHERE" do
         selector.should have_pseudo_sql "SELECT people.* FROM people"
-        selector2 = selector.copy(where: (people["id"] == 10))
+        selector2 = selector.copy(where: (people[:id] == 10))
         selector2.should have_pseudo_sql "SELECT people.* FROM people WHERE people.id = 10"
+      end
+
+      it 'creates a query restricting IN a subselect' do
+        selector2 = selector.copy(where: people[:id].in?(selector))
+        selector2.should have_pseudo_sql "SELECT people.* FROM people WHERE " +
+          "people.id IN (SELECT people.* FROM people)"
       end
 
       it 'creates a query without FROM (PostgreSQL and MySQL supports this)' do
