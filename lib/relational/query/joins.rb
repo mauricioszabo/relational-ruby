@@ -15,11 +15,6 @@ module Relational
         @associations[association_name] = association
       end
 
-      #def create_condition(join_table, params)
-      #  table[params[:pk]] == join_table[params[:fk]]
-      #end
-      #private :create_condition
-
       def joins(*list_of_joins)
         JoinsHelper.new(self, @associations).execute(list_of_joins)
       end
