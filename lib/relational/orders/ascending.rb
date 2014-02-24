@@ -2,7 +2,8 @@ require_relative '../partial'
 
 module Relational
   module Orders
-    class Ascending < Partial
+    class Ascending
+      include Partial
       def initialize(partial)
         @partial = partial.partial
       end

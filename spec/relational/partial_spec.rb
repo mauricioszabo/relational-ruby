@@ -2,7 +2,8 @@ require_relative '../helper'
 
 module Relational
   describe Partial do
-    class Foo < Partial
+    class Foo
+      include Partial
       def initialize(query, attrs)
         @query, @attrs = query, attrs
       end

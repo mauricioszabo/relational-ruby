@@ -3,7 +3,8 @@ require_relative '../attributes/aliasable'
 
 module Relational
   module Comparissions
-    class Or < Partial
+    class Or
+      include Partial
       include Attributes::Aliasable
 
       def initialize(items)

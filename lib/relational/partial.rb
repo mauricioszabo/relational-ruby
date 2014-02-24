@@ -2,10 +2,13 @@ require_relative 'lazy'
 require_relative 'partial_statement'
 
 module Relational
-  class Partial
-    extend Lazy
+  module Partial
+    def self.included(klass)
+      klass.extend Lazy
+    end
 
-    class Simple < Partial
+    class Simple
+      include Partial
       def initialize(query, attributes)
         @query, @attributes = query, attributes
       end

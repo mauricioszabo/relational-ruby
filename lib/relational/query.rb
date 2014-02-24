@@ -2,6 +2,8 @@ require_relative 'query/joins'
 
 module Relational
   module Query
+    include Partial
+
     class NO_OPT
     end
 

@@ -6,7 +6,8 @@ require_relative 'attributes/none'
 require_relative 'adapter/function_definition'
 
 module Relational
-  class Selector < Partial
+  class Selector
+    include Partial
     extend Adapter::FunctionDefinition
 
     DEFAULTS = {

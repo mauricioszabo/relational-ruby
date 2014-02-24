@@ -2,7 +2,8 @@ require_relative '../partial'
 
 module Relational
   module Comparissions
-    class In < Partial
+    class In
+      include Partial
       def initialize(attribute, items, negate=false)
         @attribute, @items, @negate = attribute, Partial.wrap(items), negate
 

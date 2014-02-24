@@ -1,7 +1,8 @@
 require_relative 'partial'
 
 module Relational
-  class ListOfPartials < Partial
+  class ListOfPartials
+    include Partial
     include Enumerable
 
     def self.[](*list_of_attributes)

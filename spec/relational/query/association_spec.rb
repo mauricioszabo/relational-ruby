@@ -43,8 +43,17 @@ module Relational::Query
         )
 
         subject.associated_with(TestFoo1.all).should have_pseudo_sql(
-          "SELECT * FROM addrs WHERE addrs.person_id IN (SELECT foos.id FROM foos)"
+          "SELECT * FROM addrs WHERE addrs.person_id IN " +
+          "(SELECT __subselect.id FROM (SELECT foos.* FROM foos) __subselect)"
         )
+      end
+
+      it 'creates a Relational when passing conditions' do
+        subject = Association.new(table: people, join_table: addrs, condition:
+          ((people[:id] > 10) & (people[:id] == addrs[:id])) )
+
+        subject.condition.should have_pseudo_sql(
+          '(people.id > 10 AND people.id = addrs.id)' )
       end
     end
   end

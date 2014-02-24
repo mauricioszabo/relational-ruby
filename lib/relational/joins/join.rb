@@ -2,7 +2,9 @@ require_relative '../partial'
 
 module Relational
   module Joins
-    class Join < Partial
+    class Join
+      include Partial
+
       def initialize(table, condition, kind)
         @table, @condition, @kind = table, condition, kind
       end

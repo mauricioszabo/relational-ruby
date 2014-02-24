@@ -1,6 +1,7 @@
 module Relational
   module Tables
-    class Table < Partial
+    class Table
+      include Partial
       attr_accessor :representation
 
       def initialize(table_name)

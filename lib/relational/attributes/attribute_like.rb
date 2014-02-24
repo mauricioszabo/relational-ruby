@@ -3,7 +3,8 @@ require_relative 'aliasable'
 
 module Relational
   module Attributes
-    class AttributeLike < Partial
+    class AttributeLike
+      include Partial
       include Aliasable
 
       lazy :select_partial do
