@@ -37,6 +37,16 @@ module Relational
           nil
         end
       end
+
+      def associated_with(ids_or_query)
+        condition = join_table[params[:fk]].in?(ids_or_query)
+
+        Selector.new(
+          select: Select[Attributes::All],
+          from: ListOfAttributes[join_table],
+          where: condition
+        )
+      end
     end
   end
 end

@@ -5,6 +5,12 @@ module Relational::Query
     let(:people) { Relational::Tables::Table.new('people') }
     let(:addrs) { Relational::Tables::Table.new('addrs') }
 
+    module TestFoo1
+      extend Relational::Query, self
+      set_table_name 'foos'
+    end
+
+
     it 'defines an association with table and keys' do
       subject = Association.new(table: people, join_table: 'addrs', pk: 'id', fk: 'person_id')
       subject.join_table.should have_pseudo_sql('addrs')
@@ -24,14 +30,22 @@ module Relational::Query
     end
 
     it 'defines an table based on a Query object' do
-      module TestFoo
-        extend Relational::Query, self
-        set_table_name 'foos'
-      end
-
-      subject = Association.new(table: people, mapper: 'TestFoo', pk: 'id', fk: 'person_id')
+      subject = Association.new(table: people, mapper: 'TestFoo1', pk: 'id', fk: 'person_id')
       subject.join_table.should have_pseudo_sql('foos')
       subject.condition.should have_pseudo_sql('people.id = foos.person_id')
+    end
+
+    context 'when getting associated records' do
+      it 'creates a Relational object when passing keys' do
+        subject = Association.new(table: people, join_table: 'addrs', pk: 'id', fk: 'person_id')
+        subject.associated_with([1, 2, 3, 4]).should have_pseudo_sql(
+          "SELECT * FROM addrs WHERE addrs.person_id IN (1,2,3,4)"
+        )
+
+        subject.associated_with(TestFoo1.all).should have_pseudo_sql(
+          "SELECT * FROM addrs WHERE addrs.person_id IN (SELECT foos.id FROM foos)"
+        )
+      end
     end
   end
 end
