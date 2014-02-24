@@ -10,6 +10,13 @@ module Relational::Query
       set_table_name 'foos'
     end
 
+    let(:people_query) do
+      Module.new do
+        extend Relational::Query, self
+        set_table_name 'people'
+      end
+    end
+
 
     it 'defines an association with table and keys' do
       subject = Association.new(table: people, join_table: 'addrs', pk: 'id', fk: 'person_id')
@@ -42,18 +49,20 @@ module Relational::Query
           "SELECT * FROM addrs WHERE addrs.person_id IN (1,2,3,4)"
         )
 
-        subject.associated_with(TestFoo1.all).should have_pseudo_sql(
-          "SELECT * FROM addrs WHERE addrs.person_id IN " +
-          "(SELECT __subselect.id FROM (SELECT foos.* FROM foos) __subselect)"
-        )
+        subject.associated_with(people_query.where(id: [1,2,3,4]))
+          .should have_pseudo_sql "SELECT * FROM addrs INNER JOIN " +
+          "(SELECT people.* FROM people WHERE people.id IN (1,2,3,4)) people " +
+          "ON people.id = addrs.person_id"
       end
 
       it 'creates a Relational when passing conditions' do
         subject = Association.new(table: people, join_table: addrs, condition:
           ((people[:id] > 10) & (people[:id] == addrs[:id])) )
 
-        subject.condition.should have_pseudo_sql(
-          '(people.id > 10 AND people.id = addrs.id)' )
+        subject.associated_with(people_query.where(id: [1,2,3,4]))
+          .should have_pseudo_sql "SELECT * FROM addrs INNER JOIN " +
+          "(SELECT people.* FROM people WHERE people.id IN (1,2,3,4)) people " +
+          "ON (people.id > 10 AND people.id = addrs.id)"
       end
     end
   end

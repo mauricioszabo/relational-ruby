@@ -242,9 +242,9 @@ module Relational
 
     def default_table_name
       class_name = if(self.is_a?(Module))
-        name.split("::").last
+        name.to_s.split("::").last.to_s
       else
-        self.class.name.split("::").last
+        self.class.name.to_s.split("::").last
       end
 
       class_name.gsub!(/[A-Z]/) { |letter| "_" + letter.downcase }

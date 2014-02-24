@@ -39,19 +39,16 @@ module Relational
       end
 
       def associated_with(ids_or_query)
-        if ids_or_query.is_a?(Partial)
-          aliased = ids_or_query.as('__subselect')
-          ids_or_query = Selector.new(
-            select: Select[aliased[params[:pk]]],
-            from: ListOfAttributes[aliased]
-          )
-        end
+        selector = Selector.new(select: Select[Attributes::All],
+          from: ListOfAttributes[join_table])
 
-        Selector.new(
-          select: Select[Attributes::All],
-          from: ListOfAttributes[join_table],
-          where: join_table[params[:fk]].in?(ids_or_query)
-        )
+        if ids_or_query.is_a?(Partial)
+          aliased = ids_or_query.as(params[:table].representation)
+          selector.copy(join:
+            ListOfPartials[Relational::Joins::InnerJoin.new(aliased, condition)])
+        else
+          selector.copy(where: join_table[params[:fk]].in?(ids_or_query))
+        end
       end
     end
   end
