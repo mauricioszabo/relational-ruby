@@ -185,12 +185,20 @@ module Relational
     end
     private :convert_fields
 
-    def limit
-      @limit  ||= Selector::DEFAULTS[:limit]
+    def limit(number = nil)
+      if(number)
+        new_partial_query(limit: number)
+      else
+        selector.opt(:limit)
+      end
     end
 
-    def offset
-      @offset ||= Selector::DEFAULTS[:offset]
+    def offset(number=nil)
+      if(number)
+        new_partial_query(offset: number)
+      else
+        selector.opt(:offset)
+      end
     end
 
     def new_partial_query(selector_options={})

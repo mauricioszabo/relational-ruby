@@ -18,8 +18,8 @@ module Relational
       having: Attributes::None,
       join: ListOfPartials,
       order:  ListOfAttributes,
-      limit: -1,
-      offset: -1
+      limit: nil,
+      offset: nil
     }
 
     def initialize(query_options={})
@@ -47,12 +47,12 @@ module Relational
       query = partial_statement.query
       attributes = partial_statement.attributes
 
-      if opt(:limit).to_i >= 0
+      if opt(:limit)
         query += " LIMIT ?"
         attributes += [opt(:limit)]
       end
 
-      if opt(:offset).to_i >= 0
+      if opt(:offset)
         query += " OFFSET ?"
         attributes += [opt(:offset)]
       end
