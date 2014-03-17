@@ -122,6 +122,57 @@ module Relational::AR
         results.to_a.should == [mock]
       end
     end
+
+    context "on ActiveRecord's interop" do
+      it 'converts SELECT clauses' do
+        People.from(Person.select('name')).should have_pseudo_sql(
+          "SELECT name FROM people"
+        )
+      end
+
+      it 'converts FROM clauses' do
+        People.from(Person.from('foo')).should have_pseudo_sql(
+          "SELECT people.* FROM foo"
+        )
+      end
+
+      it 'converts WHERE clauses' do
+        person = Person.where(id: 10)
+        People.from(person).restrict(id: 20).where.should have_pseudo_sql(
+          '("people"."id" = 10 AND people.id = 20)'
+        )
+      end
+
+      it 'converts GROUP clauses' do
+        People.from(Person.group(:id)).should have_pseudo_sql(
+          "SELECT people.* FROM people GROUP BY people.id"
+        )
+      end
+
+      it 'converts HAVING clauses' do
+        People.from(Person.having(id: 10)).should have_pseudo_sql(
+          'SELECT people.* FROM people HAVING "people"."id" = 10'
+        )
+      end
+
+      it 'converts JOIN' do
+        People.from(Person.joins(:addresses)).partial.to_pseudo_sql.should include(
+          'INNER JOIN "addresses" ON'
+        )
+      end
+
+      it 'converts ORDER' do
+        People.from(Person.order(:name)).should have_pseudo_sql(
+          "SELECT people.* FROM people ORDER BY people.name"
+        )
+      end
+
+      it 'converts LIMIT and OFFSET' do
+        People.from(Person.limit(10).offset(1)).should have_pseudo_sql(
+          'SELECT people.* FROM people LIMIT 10 OFFSET 1'
+        )
+      end
+    end
   end
 end
 

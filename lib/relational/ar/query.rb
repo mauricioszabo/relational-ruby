@@ -2,6 +2,7 @@ begin
 require 'active_record'
 require_relative '../query'
 require_relative 'results'
+require_relative 'sql_string'
 
 module Relational
   module AR
@@ -34,6 +35,68 @@ module Relational
         end
         private :send_query
       end
+
+      def from(*params)
+        if(params.size == 1 && params[0].is_a?(ActiveRecord::Relation))
+          convert_from_arel(params[0])
+        else
+          super
+        end
+      end
+
+      def convert_from_arel(relation)
+        arel = relation.arel
+        me = self
+
+        if(relation.select_values.size > 0)
+          me = me.select(*convert_attrs(relation.select_values))
+        end
+
+        me = me.from(*convert_attrs(arel.froms))
+        me = me.where(convert_where(relation.where_values))
+        me = me.group(*convert_attrs(relation.group_values)) if(relation.group_values.size > 0)
+        me = me.having(convert_where(relation.having_values))
+
+        if(arel.join_sources.size > 0)
+          me = me.join(ListOfPartials[SQLString.new(arel.join_sql)])
+        end
+
+        me = me.order(*convert_attrs(relation.order_values)) if(relation.order_values.size > 0)
+
+        me = me.limit(relation.limit_value) if relation.limit_value
+        me = me.offset(relation.offset_value) if relation.offset_value
+        me
+      end
+      private :convert_from_arel
+
+      def convert_attrs(attrs)
+        attrs.map do |item|
+          if item.is_a?(Arel::Table)
+            SQLString.new(item.name)
+          elsif item.respond_to?(:to_sql)
+            SQLString.new(item.to_sql)
+          elsif item.is_a?(String)
+            SQLString.new(item)
+          else
+            item
+          end
+        end
+      end
+      private :convert_attrs
+
+      def convert_where(wheres)
+        wheres.inject(Relational::Attributes::None) do |clause, where|
+          where = if(where.respond_to?(:to_sql))
+            SQLString.new(where.to_sql)
+          else
+            SQLString.new(where)
+          end
+          clause & where
+        end
+        #wheres = "(#{wheres.join(" AND ")})"
+        #me = me.where(SQLString.new(wheres))
+      end
+      private :convert_where
 
       def set_model(model)
         options[:model] = model
