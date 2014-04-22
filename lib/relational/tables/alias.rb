@@ -1,3 +1,5 @@
+require_relative 'table'
+
 module Relational
   module Tables
     class Alias < Table

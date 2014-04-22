@@ -1,5 +1,6 @@
 begin
 require 'active_record'
+require 'sqlite3'
 require_relative '../../helper'
 
 module Relational::AR
