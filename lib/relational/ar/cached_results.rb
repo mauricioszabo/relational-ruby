@@ -13,7 +13,7 @@ module Relational
           @cached.each(&b)
         else
           @cached = []
-          while(row = @rows.shift)
+          while(row = @result_set.next)
             object = map_to(row)
             @cached << object
             b.call object
@@ -38,7 +38,7 @@ module Relational
         if(@cached)
           @cached[index]
         else
-          map_to(@rows[index])
+          super
         end
       end
 

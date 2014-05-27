@@ -6,34 +6,34 @@ module Relational
   module AR
     class Results
       include Enumerable
-      attr_reader :rows, :model
-      protected :rows, :model
+      attr_reader :result_set, :model
+      protected :result_set, :model
 
-      def initialize(rows, model)
-        @rows, @model = rows, model
+      def initialize(result_set, model)
+        @result_set, @model = result_set, model
       end
 
       def each
-        @rows.each do |row|
+        @result_set.each do |row|
           yield map_to(row)
         end
       end
 
       def ==(other)
-        other.class == self.class && rows == other.rows && model == other.model
+        other.class == self.class && result_set.to_a == other.result_set.to_a && model == other.model
       end
 
       def [](index)
-        row = @rows[index]
+        row = result_set.to_a[index]
         map_to(row) if row
+      end
+
+      def size
+        result_set.to_a.size
       end
 
       def map_to(row)
         @model.instantiate(row)
-      end
-
-      def size
-        @rows.size
       end
     end
   end

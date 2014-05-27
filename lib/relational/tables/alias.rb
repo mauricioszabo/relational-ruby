@@ -1,4 +1,4 @@
-require_relative 'table'
+require_relative '../partial'
 
 module Relational
   module Tables

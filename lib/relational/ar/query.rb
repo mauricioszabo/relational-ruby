@@ -14,24 +14,24 @@ module Relational
         include Relational::Query::Mapper
 
         def results
-          rows = send_query(partial)
-          Relational::AR::Results.new(rows, options[:model])
+          rs = send_query(partial)
+          Relational::AR::Results.new(rs, options[:model])
         end
 
         def cached_results
-          rows = send_query(partial)
-          Relational::AR::CachedResults.new(rows, options[:model])
+          rs = send_query(partial)
+          Relational::AR::CachedResults.new(rs, options[:model])
         end
 
         def count
-          count = send_query(count_query.partial)[0]
+          count = send_query(count_query.partial).next
           count['count'].to_i
         end
 
         def send_query(partial)
           model = options[:model]
           query = model.send(:sanitize_sql, [partial.query, *partial.attributes])
-          model.connection.select_all(query)
+          ResultSets.for_db(model.connection, query)
         end
         private :send_query
       end

@@ -1,6 +1,5 @@
 begin
 require 'active_record'
-require 'sqlite3'
 require_relative '../../helper'
 
 module Relational::AR
@@ -11,6 +10,11 @@ module Relational::AR
 
     class Address < ActiveRecord::Base
       belongs_to :person
+      has_many :phones
+    end
+
+    class Phone < ActiveRecord::Base
+      belongs_to :address
     end
 
     module People
@@ -45,12 +49,6 @@ module Relational::AR
     end
 
     context 'when joining' do
-      class Phone < ActiveRecord::Base
-        belongs_to :address
-      end
-
-      Address.has_many :phones
-
       before :all do
         Phone.connection.execute "CREATE TABLE phones (id INTEGER PRIMARY KEY,
           number VARCHAR(255), address_id INTEGER)"
@@ -163,8 +161,8 @@ module Relational::AR
       end
 
       it 'converts ORDER' do
-        People.from(Person.order(:name)).should have_pseudo_sql(
-          "SELECT people.* FROM people ORDER BY people.name"
+        People.from(Person.order(:name)).partial.to_pseudo_sql.should include(
+          'SELECT people.* FROM people ORDER BY "people"."name"'
         )
       end
 

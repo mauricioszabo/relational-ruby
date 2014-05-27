@@ -1,3 +1,5 @@
+require_relative '../partial'
+
 module Relational
   module Tables
     class Table
