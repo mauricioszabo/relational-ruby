@@ -4,12 +4,6 @@ module Relational
   module AR
     module ResultSets
       class SQLite < Base
-        def next
-          results.next
-        rescue StopIteration
-          nil
-        end
-
         def each(&b)
           @connection.execute(@query).each(&b)
         end

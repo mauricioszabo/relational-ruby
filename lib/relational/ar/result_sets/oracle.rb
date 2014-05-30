@@ -4,13 +4,6 @@ module Relational
   module AR
     module ResultSets
       class Oracle < Base
-        def next
-          row = results.fetch_hash
-          if row
-            to_hash(row)
-          end
-        end
-
         def each
           result_set = @connection.execute(@query)
           while(row = result_set.fetch_hash)
@@ -26,10 +19,6 @@ module Relational
           hash
         end
         private :to_hash
-
-        def results
-          @results ||= @connection.execute(@query)
-        end
       end
     end
   end
